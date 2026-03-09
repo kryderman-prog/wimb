@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WIMB map dashboard">
+    <title>WIMB - Dashboard</title>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+
+<body>
+
+    <main class="dashboard-wrapper">
+        <header class="dashboard-header">
+            <h2 class="title title-small">Welcome, <span id="username">User</span></h2>
+            <button id="logout" class="btn btn-outline" aria-label="Logout">Logout</button>
+        </header>
+
+        <!-- Interactive Map Container -->
+        <section id="map" class="map-container" aria-label="Interactive Map"></section>
+    </main>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- App Logic -->
+    <script src="js/app.js"></script>
+    <!-- Map Logic -->
+    <script src="js/map.js"></script>
+</body>
+
+</html>

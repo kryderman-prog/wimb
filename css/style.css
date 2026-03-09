@@ -1,0 +1,192 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+
+/* ---- CSS Variables ---- */
+:root {
+    --bg-color: #fafbfc;
+    --text-color: #1a1a2e;
+    --text-muted: #6b7280;
+    --primary-color: #0f172a;
+    --primary-hover: #1e293b;
+    --card-bg: #ffffff;
+    --border-radius: 16px;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ---- Reset & Base Styles ---- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Typography ---- */
+.title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.title-small {
+    font-size: 1.5rem;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    font-weight: 300;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.fade {
+    opacity: 0.8;
+}
+
+/* ---- Containers & Layout ---- */
+.container {
+    background-color: var(--card-bg);
+    padding: 3rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    max-width: 440px;
+    width: 90%;
+    margin: auto;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.container:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+
+.dashboard-wrapper {
+    width: 95%;
+    max-width: 1200px;
+    height: 90vh;
+    margin: 2rem auto;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ---- UI Elements ---- */
+.hero-image {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    display: block;
+    margin: 2rem auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease;
+}
+
+.hero-image:hover {
+    transform: scale(1.02);
+}
+
+/* ---- Buttons ---- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+.btn-outline {
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.95rem;
+}
+
+.btn-outline:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+/* ---- Google Sign-in Wrapper ---- */
+.google-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+    min-height: 40px;
+}
+
+/* ---- Dashboard Specifics ---- */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.map-container {
+    flex-grow: 1;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+    /* For leaflet compatibility */
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.container,
+.dashboard-wrapper {
+    animation: fadeIn 0.4s ease-out forwards;
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to WIMB with Google to continue">
+    <title>WIMB - Login</title>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <main class="container text-center">
+        <h1 class="title">Sign In</h1>
+        <p class="subtitle fade">Welcome back to WIMB.</p>
+
+        <div class="google-btn-wrapper">
+            <!-- Google Identity Services Script -->
+            <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+            <div id="g_id_onload"
+                data-client_id="855845558917-r63k8ltsn54284b8s5f3lmsvokil43ce.apps.googleusercontent.com"
+                data-context="signin" data-ux_mode="popup" data-callback="handleCredentialResponse"
+                data-auto_prompt="false">
+            </div>
+
+            <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
+                data-text="signin_with" data-size="large" data-logo_alignment="left">
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <p style="margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">— OR —</p>
+            <button id="devLogin" class="btn btn-outline">Developer Test Login</button>
+        </div>
+    </main>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- App Logic -->
+    <script src="js/app.js"></script>
+</body>
+
+</html>
