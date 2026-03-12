@@ -4,6 +4,9 @@
  */
 
 (function () {
+    const SUPABASE_URL = "YOUR_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+
     function decodeJwtPayload(jwt) {
         const parts = String(jwt || "").split(".");
         if (parts.length < 2) return null;
@@ -42,24 +45,38 @@
 
             if (!google_id || !email) throw new Error("Incomplete Google profile");
 
-            $.ajax({
-                url: "/api/auth/google",
+            if (SUPABASE_URL === "YOUR_SUPABASE_URL" || SUPABASE_ANON_KEY === "YOUR_SUPABASE_ANON_KEY") {
+                alert("Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in js/login.js.");
+                return;
+            }
+
+            const user = { google_id, username, firstname, email, picture };
+
+            fetch(`${SUPABASE_URL.replace(/\\/$/, "")}/rest/v1/users?on_conflict=google_id`, {
                 method: "POST",
-                contentType: "application/json; charset=utf-8",
-                data: JSON.stringify({ google_id, username, firstname, email, picture }),
-                success: function () {
+                headers: {
+                    apikey: SUPABASE_ANON_KEY,
+                    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+                    "Content-Type": "application/json",
+                    Prefer: "resolution=merge-duplicates",
+                },
+                body: JSON.stringify([user]),
+            })
+                .then(async (res) => {
+                    if (!res.ok) {
+                        const text = await res.text().catch(() => "");
+                        throw new Error(text || `Supabase upsert failed (${res.status})`);
+                    }
                     localStorage.setItem("wimb_logged_in", "true");
                     localStorage.setItem("wimb_user_name", username || firstname || "User");
+                    localStorage.setItem("wimb_user_email", email);
+                    localStorage.setItem("wimb_user_picture", picture);
                     window.location.href = "dashboard.html";
-                },
-                error: function (xhr) {
-                    const msg =
-                        (xhr && xhr.responseJSON && (xhr.responseJSON.error || xhr.responseJSON.message)) ||
-                        (xhr && xhr.responseText) ||
-                        "Google login failed.";
-                    alert(msg);
-                },
-            });
+                })
+                .catch((err) => {
+                    console.error(err);
+                    alert("Google login failed.");
+                });
         } catch (err) {
             console.error(err);
             alert("Google login failed.");
