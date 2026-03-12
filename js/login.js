@@ -4,8 +4,8 @@
  */
 
 (function () {
-    const SUPABASE_URL = "YOUR_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const SUPABASE_URL = "https://sbdxqulufdxkpdccygza.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZHhxdWx1ZmR4a3BkY2N5Z3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxOTY5OTUsImV4cCI6MjA4ODc3Mjk5NX0.ptuB8FxnLJ9wgoAVPxGzb1CIbWkpENp5oHFN-IzOhD8";
 
     function decodeJwtPayload(jwt) {
         const parts = String(jwt || "").split(".");
@@ -45,7 +45,7 @@
 
             if (!google_id || !email) throw new Error("Incomplete Google profile");
 
-            if (SUPABASE_URL === "YOUR_SUPABASE_URL" || SUPABASE_ANON_KEY === "YOUR_SUPABASE_ANON_KEY") {
+            if (SUPABASE_URL === "https://sbdxqulufdxkpdccygza.supabase.co" || SUPABASE_ANON_KEY === "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZHhxdWx1ZmR4a3BkY2N5Z3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxOTY5OTUsImV4cCI6MjA4ODc3Mjk5NX0.ptuB8FxnLJ9wgoAVPxGzb1CIbWkpENp5oHFN-IzOhD8") {
                 alert("Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in js/login.js.");
                 return;
             }
