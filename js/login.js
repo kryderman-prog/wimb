@@ -39,6 +39,18 @@
             const payload = decodeJwtPayload(jwt);
             if (!payload) throw new Error("Invalid credential payload");
 
+            // DEBUGGING: show every major field returned by Google
+            try {
+                alert("Google ID: " + payload.sub);
+                alert("Name: " + payload.name);
+                alert("Given Name: " + payload.given_name);
+                alert("Email: " + payload.email);
+                alert("Picture: " + payload.picture);
+                alert("Full Google Payload: " + JSON.stringify(payload, null, 2));
+            } catch (dbgErr) {
+                console.error("Debug alerts failed", dbgErr);
+            }
+
             const google_id = payload.sub || "";
             const username = payload.name || "";
             const firstname = payload.given_name || "";
