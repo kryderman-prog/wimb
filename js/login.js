@@ -4,8 +4,10 @@
  */
 
 (function () {
-    const SUPABASE_URL = "https://sbdxqulufdxkpdccygza.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZHhxdWx1ZmR4a3BkY2N5Z3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxOTY5OTUsImV4cCI6MjA4ODc3Mjk5NX0.ptuB8FxnLJ9wgoAVPxGzb1CIbWkpENp5oHFN-IzOhD8";
+    // configuration values are defined in js/config.js and must not be
+    // redeclared here.  config.js is loaded before this script in login.html.
+    // We'll perform a quick sanity check later to ensure they have been
+    // replaced from their placeholder values.
 
     function decodeJwtPayload(jwt) {
         const parts = String(jwt || "").split(".");
@@ -45,8 +47,10 @@
 
             if (!google_id || !email) throw new Error("Incomplete Google profile");
 
-            if (SUPABASE_URL === "https://sbdxqulufdxkpdccygza.supabase.co" || SUPABASE_ANON_KEY === "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZHhxdWx1ZmR4a3BkY2N5Z3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxOTY5OTUsImV4cCI6MjA4ODc3Mjk5NX0.ptuB8FxnLJ9wgoAVPxGzb1CIbWkpENp5oHFN-IzOhD8") {
-                alert("Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in js/login.js.");
+            // ensure the configuration constants have been provided
+            if (!SUPABASE_URL || !SUPABASE_ANON_KEY ||
+                SUPABASE_URL === "REPLACE_ME" || SUPABASE_ANON_KEY === "REPLACE_ME") {
+                alert("Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in js/config.js.");
                 return;
             }
 
