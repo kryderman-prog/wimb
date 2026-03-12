@@ -4,8 +4,8 @@
  */
 
 (function () {
-    const SUPABASE_URL = "https://sbdxqulufdxkpdccygza.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZHhxdWx1ZmR4a3BkY2N5Z3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxOTY5OTUsImV4cCI6MjA4ODc3Mjk5NX0.ptuB8FxnLJ9wgoAVPxGzb1CIbWkpENp5oHFN-IzOhD8";
+    const SUPABASE_URL = "YOUR_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
     function decodeJwtPayload(jwt) {
         const parts = String(jwt || "").split(".");
@@ -67,6 +67,7 @@
                         const text = await res.text().catch(() => "");
                         throw new Error(text || `Supabase upsert failed (${res.status})`);
                     }
+                    localStorage.setItem("wimb_user", JSON.stringify(user));
                     localStorage.setItem("wimb_logged_in", "true");
                     localStorage.setItem("wimb_user_name", username || firstname || "User");
                     localStorage.setItem("wimb_user_email", email);
@@ -75,11 +76,11 @@
                 })
                 .catch((err) => {
                     console.error(err);
-                    alert("Google login failed.");
+                    alert("Google login failed");
                 });
         } catch (err) {
             console.error(err);
-            alert("Google login failed.");
+            alert("Google login failed");
         }
     };
 })();
