@@ -16,46 +16,25 @@ try {
         }
 
         const loggedInUser = JSON.parse(localStorage.getItem("sessionUser"));
-        console.log('Logged in user:', loggedInUser);
-        if (!loggedInUser) {
-            console.log('No logged in user, exiting');
-            return;
-        }
+        console.log("Logged in user:", loggedInUser);
+        // Allow search even if not logged in
 
-        let loggedInId = null;
-
-        // Get logged in user's id (async, don't block)
-        fetch(SUPABASE_URL + "/rest/v1/users?google_id=eq." + loggedInUser.google_id + "&select=id", {
-            headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": "Bearer " + SUPABASE_ANON_KEY
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.length > 0) {
-                loggedInId = data[0].id;
-                console.log('Logged in ID fetched:', loggedInId);
-            }
-        })
-        .catch(err => console.error('Failed to fetch logged in ID:', err));
-
-        let searchTimeout;
+        let searchTimer;
 
         // Delegated event binding
         $(document).on('keyup', '#user-search-input', function() {
             const value = $(this).val().trim();
             console.log("keyup working", value);
-            //clearTimeout(searchTimeout);
+            clearTimeout(searchTimer);
             if (value.length < 2) {
                 if ($('#user-search-results').length) {
                     $('#user-search-results').empty();
                 }
                 return;
             }
-            // searchTimeout = setTimeout(() => {
-            //     performSearch(value);
-            // }, 300);
+            searchTimer = setTimeout(() => {
+                performSearch(value);
+            }, 300);
         });
 
         async function performSearch(query) {
@@ -89,99 +68,22 @@ try {
         }
 
         function renderResults(users) {
-            // Exclude logged-in user if ID available
-            let filteredUsers = users;
-            if (loggedInId) {
-                filteredUsers = users.filter(user => user.id !== loggedInId);
-            }
-            console.log('Filtered results:', filteredUsers);
+            console.log('Rendering results:', users);
             if (!$('#user-search-results').length) {
                 console.error('Results container not found during render');
                 return;
             }
-            if (filteredUsers.length === 0) {
-                $('#user-search-results').html('<div class="no-users">No users found</div>');
+            if (users.length === 0) {
+                $('#user-search-results').html('<div>No users found</div>');
                 return;
             }
             let html = '';
-            filteredUsers.forEach(user => {
+            users.forEach(user => {
                 html += `<div class="search-result-item">
-                    <span class="search-user-label">${user.username} (${user.firstname})</span>
-                    <button class="add-circle-btn" data-userid="${user.id}">Add to Circle</button>
+                    ${user.username} (${user.firstname})
                 </div>`;
             });
             $('#user-search-results').html(html);
-        }
-
-        $(document).on('click', '.add-circle-btn', function() {
-            const userId = $(this).data('userid');
-            addToCircle(userId);
-        });
-
-        function addToCircle(userId) {
-            // Fetch user's circles
-            fetch(SUPABASE_URL + "/rest/v1/circles?user_id=eq." + loggedInId + "&select=id,name", {
-                headers: {
-                    "apikey": SUPABASE_ANON_KEY,
-                    "Authorization": "Bearer " + SUPABASE_ANON_KEY
-                }
-            })
-            .then(res => res.json())
-            .then(circles => {
-                if (circles.length === 0) {
-                    alert("You have no circles to add to.");
-                    return;
-                }
-                let circleId;
-                if (circles.length === 1) {
-                    circleId = circles[0].id;
-                } else {
-                    const circleNames = circles.map(c => c.name).join(', ');
-                    const selectedName = prompt("Select a circle: " + circleNames);
-                    const selectedCircle = circles.find(c => c.name === selectedName);
-                    if (!selectedCircle) {
-                        alert("Invalid circle selected.");
-                        return;
-                    }
-                    circleId = selectedCircle.id;
-                }
-                // Insert into circle_members
-                fetch(SUPABASE_URL + "/rest/v1/circle_members", {
-                    method: "POST",
-                    headers: {
-                        "apikey": SUPABASE_ANON_KEY,
-                        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-                        "Content-Type": "application/json",
-                        "Prefer": "return=minimal"
-                    },
-                    body: JSON.stringify({
-                        circle_id: circleId,
-                        user_id: userId,
-                        joined_at: new Date().toISOString()
-                    })
-                })
-                .then(res => {
-                    if (res.ok) {
-                        alert("User added to circle!");
-                    } else {
-                        return res.text().then(text => {
-                            if (text.includes("duplicate")) {
-                                alert("User is already in this circle.");
-                            } else {
-                                alert("Failed to add user: " + text);
-                            }
-                        });
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("Error adding user to circle.");
-                });
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Failed to fetch circles.");
-            });
         }
     });
 } catch (err) {
