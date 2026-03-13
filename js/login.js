@@ -39,18 +39,6 @@
             const payload = decodeJwtPayload(jwt);
             if (!payload) throw new Error("Invalid credential payload");
 
-            // DEBUGGING: show every major field returned by Google
-            try {
-                alert("Google ID: " + payload.sub);
-                alert("Name: " + payload.name);
-                alert("Given Name: " + payload.given_name);
-                alert("Email: " + payload.email);
-                alert("Picture: " + payload.picture);
-                alert("Full Google Payload: " + JSON.stringify(payload, null, 2));
-            } catch (dbgErr) {
-                console.error("Debug alerts failed", dbgErr);
-            }
-
             const google_id = payload.sub || "";
             const username = payload.name || "";
             const firstname = payload.given_name || "";
@@ -66,37 +54,44 @@
                 return;
             }
 
-            const user = { google_id, username, firstname, email, picture };
+            const user = { google_id, username, firstname, email };
 
-            fetch(`${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/users?on_conflict=google_id`, {
+            fetch(SUPABASE_URL + "/rest/v1/users", {
                 method: "POST",
                 headers: {
-                    apikey: SUPABASE_ANON_KEY,
-                    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Authorization": "Bearer " + SUPABASE_ANON_KEY,
                     "Content-Type": "application/json",
-                    Prefer: "resolution=merge-duplicates",
+                    "Prefer": "resolution=merge-duplicates,return=representation"
                 },
-                body: JSON.stringify([user]),
+                body: JSON.stringify(user)
             })
-                .then(async (res) => {
-                    if (!res.ok) {
-                        const text = await res.text().catch(() => "");
-                        throw new Error(text || `Supabase upsert failed (${res.status})`);
-                    }
-                    localStorage.setItem("wimb_user", JSON.stringify(user));
-                    localStorage.setItem("wimb_logged_in", "true");
-                    localStorage.setItem("wimb_user_name", username || firstname || "User");
-                    localStorage.setItem("wimb_user_email", email);
-                    localStorage.setItem("wimb_user_picture", picture);
-                    window.location.href = "dashboard.html";
+                .then(async res => {
+
+                const text = await res.text();
+
+                if (!res.ok) {
+                    alert("Supabase Error: " + text);
+                    throw new Error(text);
+                }
+
+                localStorage.setItem("wimb_user", JSON.stringify(user));
+                localStorage.setItem("wimb_logged_in", "true");
+                localStorage.setItem("wimb_user_name", username || firstname || "User");
+                localStorage.setItem("wimb_user_email", email);
+                localStorage.setItem("wimb_user_picture", picture);
+                window.location.href = "dashboard.html";
+
                 })
-                .catch((err) => {
-                    console.error(err);
-                    alert("Google login failed");
+                .catch(err => {
+
+                console.error(err);
+                alert("Database login failed insidee");
+
                 });
         } catch (err) {
             console.error(err);
-            alert("Google login failed");
+            alert("Google login failed outside");
         }
     };
 })();
