@@ -54,8 +54,8 @@
                 return;
             }
 
-            const user = { google_id, username, firstname, email };
-            const insertData = { ...user, picture };
+            const sessionUser = { google_id, username, firstname, email, picture };
+            const dbUser = { google_id, username, firstname: firstname.trim() };
 
             // Step 1: Check if user exists
             fetch(SUPABASE_URL + "/rest/v1/users?google_id=eq." + google_id + "&select=google_id", {
@@ -75,7 +75,7 @@
                 .then(data => {
                     if (data.length > 0) {
                         // User exists, create session
-                        localStorage.setItem("wimb_user", JSON.stringify(user));
+                        localStorage.setItem("wimb_user", JSON.stringify(sessionUser));
                         localStorage.setItem("wimb_logged_in", "true");
                         localStorage.setItem("wimb_user_name", username || firstname || "User");
                         localStorage.setItem("wimb_user_email", email);
@@ -91,15 +91,16 @@
                                 "Content-Type": "application/json",
                                 "Prefer": "return=minimal"
                             },
-                            body: JSON.stringify(insertData)
+                            body: JSON.stringify(dbUser)
                         })
                             .then(async res => {
                                 if (!res.ok) {
-                                    alert("User registration failed");
+                                    const text = await res.text();
+                                    alert("Supabase insert error: " + text);
                                     throw new Error("insert failed");
                                 }
                                 // After successful insert, create session
-                                localStorage.setItem("wimb_user", JSON.stringify(user));
+                                localStorage.setItem("wimb_user", JSON.stringify(sessionUser));
                                 localStorage.setItem("wimb_logged_in", "true");
                                 localStorage.setItem("wimb_user_name", username || firstname || "User");
                                 localStorage.setItem("wimb_user_email", email);
