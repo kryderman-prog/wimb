@@ -3,147 +3,171 @@
  * User search functionality for dashboard.html
  */
 
-$(document).ready(function() {
-    const loggedInUser = JSON.parse(localStorage.getItem("wimb_user"));
-    if (!loggedInUser) return; // not logged in
+console.log("user-search.js loaded");
 
-    let loggedInId = null;
+// Debounce timer (global variable as required)
+let searchTimer;
 
-    // Get logged in user's id
-    fetch(SUPABASE_URL + "/rest/v1/users?google_id=eq." + loggedInUser.google_id + "&select=id", {
-        headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": "Bearer " + SUPABASE_ANON_KEY
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.length > 0) {
-            loggedInId = data[0].id;
-        }
-    });
+(function initUserSearch() {
+    if (typeof window.jQuery === "undefined") {
+        console.error("jQuery is not loaded; user search disabled");
+        return;
+    }
 
-    let searchTimeout;
+    let configLoadPromise = null;
+    let activeRequestId = 0;
 
-    $('#user-search-input').on('keyup', function() {
-        clearTimeout(searchTimeout);
-        const query = $(this).val().trim();
-        console.log('Search input:', query);
-        if (query.length < 2) {
-            $('#user-search-results').empty();
-            return;
-        }
-        searchTimeout = setTimeout(() => {
-            performSearch(query);
-        }, 300);
-    });
-
-    async function performSearch(query) {
-        console.log('Searching for:', query);
-        $('#user-search-results').html('<div class="loading">Searching...</div>');
-        const url = SUPABASE_URL + "/rest/v1/users?firstname=ilike.*" + query + "*&select=id,username,firstname&limit=10";
+    function readSessionUser() {
+        const raw = localStorage && localStorage.sessionUser;
+        if (!raw) return null;
         try {
-            const response = await fetch(url, {
-                headers: {
-                    "apikey": SUPABASE_ANON_KEY,
-                    "Authorization": "Bearer " + SUPABASE_ANON_KEY
-                }
-            });
-            const data = await response.json();
-            console.log('Search results:', data);
-            renderResults(data);
+            return JSON.parse(raw);
         } catch (err) {
-            console.error('Search error:', err);
-            $('#user-search-results').html('<div class="error">Search failed</div>');
+            console.error("Failed to parse localStorage.sessionUser", err);
+            return null;
         }
+    }
+
+    function getSupabaseConfig() {
+        const url = typeof SUPABASE_URL === "undefined" ? null : SUPABASE_URL;
+        const anonKey = typeof SUPABASE_ANON_KEY === "undefined" ? null : SUPABASE_ANON_KEY;
+        return url && anonKey ? { url, anonKey } : null;
+    }
+
+    function loadSupabaseConfigIfMissing() {
+        const existingConfig = getSupabaseConfig();
+        if (existingConfig) return Promise.resolve(existingConfig);
+
+        // Safety check log as required
+        if (typeof SUPABASE_URL === "undefined") {
+            console.error("SUPABASE_URL undefined");
+        }
+
+        if (configLoadPromise) return configLoadPromise;
+
+        configLoadPromise = new Promise((resolve) => {
+            const script = document.createElement("script");
+            script.src = "js/config.js";
+            script.async = true;
+            script.onload = function () {
+                resolve(getSupabaseConfig());
+            };
+            script.onerror = function () {
+                console.error("Failed to load js/config.js");
+                resolve(null);
+            };
+            (document.head || document.documentElement).appendChild(script);
+        });
+
+        return configLoadPromise;
     }
 
     function renderResults(users) {
-        // Exclude logged-in user
-        const filteredUsers = users.filter(user => user.id !== loggedInId);
-        console.log('Filtered results:', filteredUsers);
-        if (filteredUsers.length === 0) {
-            $('#user-search-results').html('<div class="no-users">No users found</div>');
+        // Safety check as required
+        if ($("#user-search-results").length === 0) {
+            console.error("results container missing");
             return;
         }
-        let html = '';
-        filteredUsers.forEach(user => {
-            html += `<div class="search-result-item">
-                <span class="search-user-label">${user.username} (${user.firstname})</span>
-                <button class="add-circle-btn" data-userid="${user.id}">Add to Circle</button>
-            </div>`;
-        });
-        $('#user-search-results').html(html);
+
+        if (!Array.isArray(users) || users.length === 0) {
+            $("#user-search-results").html("<div>No users found</div>");
+            return;
+        }
+
+        const html = users
+            .map((user) => {
+                const username = (user && user.username) ? user.username : "";
+                const firstname = (user && user.firstname) ? user.firstname : "";
+                return `<div class="search-result-item">${username} (${firstname})</div>`;
+            })
+            .join("");
+
+        $("#user-search-results").html(html);
     }
 
-    $(document).on('click', '.add-circle-btn', function() {
-        const userId = $(this).data('userid');
-        addToCircle(userId);
+    async function performSearch(query, requestId) {
+        const $results = $("#user-search-results");
+        if ($results.length === 0) {
+            console.error("results container missing");
+            return;
+        }
+
+        const config = await loadSupabaseConfigIfMissing();
+        if (!config) {
+            $results.html("<div>No users found</div>");
+            return;
+        }
+
+        console.log("calling supabase search");
+
+        const url =
+            config.url +
+            "/rest/v1/users?firstname=ilike.*" +
+            query +
+            "*&select=id,username,firstname&limit=10";
+
+        try {
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    apikey: config.anonKey,
+                    Authorization: "Bearer " + config.anonKey,
+                },
+            });
+
+            let data;
+            try {
+                data = await response.json();
+            } catch (_) {
+                data = null;
+            }
+
+            console.log("search response:", data);
+
+            if (!response.ok) {
+                throw new Error("Supabase search failed: " + response.status);
+            }
+
+            // Ignore stale responses (user typed a new query)
+            if (requestId !== activeRequestId) return;
+
+            let users = Array.isArray(data) ? data : [];
+
+            // Exclude current user only if sessionUser is present and has an id
+            const sessionUser = readSessionUser();
+            const sessionUserId = sessionUser && sessionUser.id ? String(sessionUser.id) : null;
+            if (sessionUserId) {
+                users = users.filter((u) => String(u && u.id) !== sessionUserId);
+            }
+
+            renderResults(users);
+        } catch (err) {
+            console.error("Search error:", err);
+            if (requestId !== activeRequestId) return;
+            $results.html("<div>No users found</div>");
+        }
+    }
+
+    // Delegated event binding (works even if input is added later)
+    $(document).on("keyup", "#user-search-input", function () {
+        const query = String($(this).val() || "").trim();
+        console.log("keyup working:", query);
+
+        clearTimeout(searchTimer);
+
+        if (query.length < 2) {
+            $("#user-search-results").empty();
+            return;
+        }
+
+        activeRequestId += 1;
+        const requestId = activeRequestId;
+
+        searchTimer = setTimeout(function () {
+            performSearch(query, requestId);
+        }, 300);
     });
 
-    function addToCircle(userId) {
-        // Fetch user's circles
-        fetch(SUPABASE_URL + "/rest/v1/circles?user_id=eq." + loggedInId + "&select=id,name", {
-            headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": "Bearer " + SUPABASE_ANON_KEY
-            }
-        })
-        .then(res => res.json())
-        .then(circles => {
-            if (circles.length === 0) {
-                alert("You have no circles to add to.");
-                return;
-            }
-            let circleId;
-            if (circles.length === 1) {
-                circleId = circles[0].id;
-            } else {
-                const circleNames = circles.map(c => c.name).join(', ');
-                const selectedName = prompt("Select a circle: " + circleNames);
-                const selectedCircle = circles.find(c => c.name === selectedName);
-                if (!selectedCircle) {
-                    alert("Invalid circle selected.");
-                    return;
-                }
-                circleId = selectedCircle.id;
-            }
-            // Insert into circle_members
-            fetch(SUPABASE_URL + "/rest/v1/circle_members", {
-                method: "POST",
-                headers: {
-                    "apikey": SUPABASE_ANON_KEY,
-                    "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-                    "Content-Type": "application/json",
-                    "Prefer": "return=minimal"
-                },
-                body: JSON.stringify({
-                    circle_id: circleId,
-                    user_id: userId,
-                    joined_at: new Date().toISOString()
-                })
-            })
-            .then(res => {
-                if (res.ok) {
-                    alert("User added to circle!");
-                } else {
-                    return res.text().then(text => {
-                        if (text.includes("duplicate")) {
-                            alert("User is already in this circle.");
-                        } else {
-                            alert("Failed to add user: " + text);
-                        }
-                    });
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Error adding user to circle.");
-            });
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Failed to fetch circles.");
-        });
-    }
-});
+    // Start loading config early (dashboard.html may not include it)
+    loadSupabaseConfigIfMissing();
+})();
