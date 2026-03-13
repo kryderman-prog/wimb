@@ -84,12 +84,13 @@
 
                 })
                 .catch(err => {
-
+                    console.log(err);
                 console.error(err);
                 alert("Database login failed insidee");
 
                 });
         } catch (err) {
+             console.log(err);
             console.error(err);
             alert("Google login failed outside");
         }
