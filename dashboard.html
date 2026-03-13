@@ -19,6 +19,10 @@
     <main class="dashboard-wrapper">
         <header class="dashboard-header">
             <h2 class="title title-small">Welcome, <span id="username">User</span></h2>
+            <div id="user-search-box">
+                <input type="text" id="user-search-input" placeholder="Search users...">
+                <div id="user-search-results"></div>
+            </div>
             <button id="logout" class="btn btn-outline" aria-label="Logout">Logout</button>
         </header>
 
@@ -36,6 +40,8 @@
     <script src="js/app.js"></script>
     <!-- Map Logic -->
     <script src="js/map.js"></script>
+    <!-- User Search Logic -->
+    <script src="js/user-search.js"></script>
 </body>
 
 </html>
