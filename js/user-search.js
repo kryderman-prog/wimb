@@ -28,6 +28,7 @@ $(document).ready(function() {
     $('#user-search-input').on('keyup', function() {
         clearTimeout(searchTimeout);
         const query = $(this).val().trim();
+        console.log('Search input:', query);
         if (query.length < 2) {
             $('#user-search-results').empty();
             return;
