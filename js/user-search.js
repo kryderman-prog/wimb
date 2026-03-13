@@ -46,16 +46,16 @@ try {
         $(document).on('keyup', '#user-search-input', function() {
             const value = $(this).val().trim();
             console.log("keyup working", value);
-            clearTimeout(searchTimeout);
+            //clearTimeout(searchTimeout);
             if (value.length < 2) {
                 if ($('#user-search-results').length) {
                     $('#user-search-results').empty();
                 }
                 return;
             }
-            searchTimeout = setTimeout(() => {
-                performSearch(value);
-            }, 300);
+            // searchTimeout = setTimeout(() => {
+            //     performSearch(value);
+            // }, 300);
         });
 
         async function performSearch(query) {
