@@ -37,34 +37,38 @@ $(document).ready(function() {
         }, 300);
     });
 
-    function performSearch(query) {
+    async function performSearch(query) {
+        console.log('Searching for:', query);
         $('#user-search-results').html('<div class="loading">Searching...</div>');
-        const url = SUPABASE_URL + "/rest/v1/users?or=(username.ilike.%25" + encodeURIComponent(query) + "%25,firstname.ilike.%25" + encodeURIComponent(query) + "%25)&select=id,username,firstname&limit=10&google_id=neq." + loggedInUser.google_id;
-        fetch(url, {
-            headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": "Bearer " + SUPABASE_ANON_KEY
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
+        const url = SUPABASE_URL + "/rest/v1/users?firstname=ilike.*" + query + "*&select=id,username,firstname&limit=10";
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Authorization": "Bearer " + SUPABASE_ANON_KEY
+                }
+            });
+            const data = await response.json();
+            console.log('Search results:', data);
             renderResults(data);
-        })
-        .catch(err => {
-            console.error(err);
+        } catch (err) {
+            console.error('Search error:', err);
             $('#user-search-results').html('<div class="error">Search failed</div>');
-        });
+        }
     }
 
     function renderResults(users) {
-        if (users.length === 0) {
-            $('#user-search-results').html('<div class="no-results">No users found</div>');
+        // Exclude logged-in user
+        const filteredUsers = users.filter(user => user.id !== loggedInId);
+        console.log('Filtered results:', filteredUsers);
+        if (filteredUsers.length === 0) {
+            $('#user-search-results').html('<div class="no-users">No users found</div>');
             return;
         }
         let html = '';
-        users.forEach(user => {
+        filteredUsers.forEach(user => {
             html += `<div class="search-result-item">
-                <div class="user-name">${user.username} (${user.firstname})</div>
+                <span class="search-user-label">${user.username} (${user.firstname})</span>
                 <button class="add-circle-btn" data-userid="${user.id}">Add to Circle</button>
             </div>`;
         });
