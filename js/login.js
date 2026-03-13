@@ -55,39 +55,61 @@
             }
 
             const user = { google_id, username, firstname, email };
+            const insertData = { ...user, picture };
 
-            fetch(SUPABASE_URL + "/rest/v1/users", {
-                method: "POST",
+            // Step 1: Check if user exists
+            fetch(SUPABASE_URL + "/rest/v1/users?google_id=eq." + google_id + "&select=google_id", {
+                method: "GET",
                 headers: {
                     "apikey": SUPABASE_ANON_KEY,
-                    "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-                    "Content-Type": "application/json",
-                    "Prefer": "resolution=merge-duplicates,return=representation"
-                },
-                body: JSON.stringify(user)
+                    "Authorization": "Bearer " + SUPABASE_ANON_KEY
+                }
             })
                 .then(async res => {
-
-                const text = await res.text();
-
-                if (!res.ok) {
-                    alert("Supabase Error: " + text);
-                    throw new Error(text);
-                }
-
-                localStorage.setItem("wimb_user", JSON.stringify(user));
-                localStorage.setItem("wimb_logged_in", "true");
-                localStorage.setItem("wimb_user_name", username || firstname || "User");
-                localStorage.setItem("wimb_user_email", email);
-                localStorage.setItem("wimb_user_picture", picture);
-                window.location.href = "dashboard.html";
-
+                    if (!res.ok) {
+                        alert("Database check failed");
+                        throw new Error("check failed");
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.length > 0) {
+                        // User exists, create session
+                        localStorage.setItem("wimb_user", JSON.stringify(user));
+                        localStorage.setItem("wimb_logged_in", "true");
+                        localStorage.setItem("wimb_user_name", username || firstname || "User");
+                        localStorage.setItem("wimb_user_email", email);
+                        localStorage.setItem("wimb_user_picture", picture);
+                        window.location.href = "dashboard.html";
+                    } else {
+                        // User does not exist, insert new user
+                        return fetch(SUPABASE_URL + "/rest/v1/users", {
+                            method: "POST",
+                            headers: {
+                                "apikey": SUPABASE_ANON_KEY,
+                                "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+                                "Content-Type": "application/json",
+                                "Prefer": "return=minimal"
+                            },
+                            body: JSON.stringify(insertData)
+                        })
+                            .then(async res => {
+                                if (!res.ok) {
+                                    alert("User registration failed");
+                                    throw new Error("insert failed");
+                                }
+                                // After successful insert, create session
+                                localStorage.setItem("wimb_user", JSON.stringify(user));
+                                localStorage.setItem("wimb_logged_in", "true");
+                                localStorage.setItem("wimb_user_name", username || firstname || "User");
+                                localStorage.setItem("wimb_user_email", email);
+                                localStorage.setItem("wimb_user_picture", picture);
+                                window.location.href = "dashboard.html";
+                            });
+                    }
                 })
                 .catch(err => {
-                    console.log(err);
-                console.error(err);
-                alert("Database login failed insidee");
-
+                    console.error(err);
                 });
         } catch (err) {
              console.log(err);

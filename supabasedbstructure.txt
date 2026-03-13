@@ -1,0 +1,8 @@
+Database Tables users
+
+Name	    Description	        Data Type	                Format	        
+id          No descriptionuuid	uuid		                uuid
+google_id   No description      text	                    text		
+username    No description      text	                    text		
+firstname   No description      text    	                text		
+created_at  No description      timestamp with time zone	timestamptz		
