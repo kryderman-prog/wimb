@@ -17,6 +17,95 @@ let searchTimer;
     let configLoadPromise = null;
     let activeRequestId = 0;
 
+    function injectSearchStyles() {
+        if (document.getElementById("wimb-user-search-styles")) return;
+
+        const style = document.createElement("style");
+        style.id = "wimb-user-search-styles";
+        style.textContent = `
+            #user-search-box { position: relative; min-width: 260px; }
+
+            #user-search-input {
+                width: 100%;
+                padding: 0.65rem 0.9rem;
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                outline: none;
+                font-size: 0.95rem;
+                background: var(--card-bg, #fff);
+                color: var(--text-color, #111827);
+            }
+
+            #user-search-input:focus {
+                border-color: rgba(15, 23, 42, 0.35);
+                box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.12);
+            }
+
+            #user-search-results {
+                position: absolute;
+                top: calc(100% + 8px);
+                left: 0;
+                right: 0;
+                background: var(--card-bg, #fff);
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+                max-height: 320px;
+                overflow: auto;
+                z-index: 9999;
+            }
+
+            #user-search-results:empty { display: none; }
+
+            #user-search-results > div:not(.search-result-item) {
+                padding: 0.75rem 0.8rem;
+                color: var(--text-muted, #6b7280);
+                font-size: 0.95rem;
+            }
+
+            .search-result-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 0.65rem 0.8rem;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .search-result-item:last-child { border-bottom: none; }
+            .search-result-item:hover { background: #f8fafc; }
+
+            .search-user-label {
+                color: var(--text-color, #111827);
+                font-size: 0.95rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .add-to-circle-btn {
+                flex: 0 0 auto;
+                padding: 0.45rem 0.7rem;
+                border-radius: 10px;
+                border: 1px solid transparent;
+                background: var(--primary-color, #0f172a);
+                color: #fff;
+                font-size: 0.85rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: transform 0.05s ease, background 0.2s ease, opacity 0.2s ease;
+            }
+
+            .add-to-circle-btn:hover { background: var(--primary-hover, #1e293b); }
+            .add-to-circle-btn:active { transform: translateY(1px); }
+            .add-to-circle-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+            .add-to-circle-btn.selected-user { background: #16a34a; }
+        `;
+
+        (document.head || document.documentElement).appendChild(style);
+    }
+
     function readSessionUser() {
         const raw = localStorage && localStorage.sessionUser;
         if (!raw) return null;
@@ -69,20 +158,35 @@ let searchTimer;
             return;
         }
 
+        const $results = $("#user-search-results");
+
         if (!Array.isArray(users) || users.length === 0) {
-            $("#user-search-results").html("<div>No users found</div>");
+            $results.html("<div>No users found</div>");
             return;
         }
 
-        const html = users
-            .map((user) => {
-                const username = (user && user.username) ? user.username : "";
-                const firstname = (user && user.firstname) ? user.firstname : "";
-                return `<div class="search-result-item">${username} (${firstname})</div>`;
-            })
-            .join("");
+        $results.empty();
 
-        $("#user-search-results").html(html);
+        users.forEach((user) => {
+            const userId = user && user.id ? String(user.id) : "";
+            const username = user && user.username ? String(user.username) : "";
+            const firstname = user && user.firstname ? String(user.firstname) : "";
+
+            const $item = $("<div>").addClass("search-result-item");
+
+            $("<span>")
+                .addClass("search-user-label")
+                .text(`${username} (${firstname})`)
+                .appendTo($item);
+
+            $("<button>")
+                .addClass("add-to-circle-btn")
+                .attr("data-userid", userId)
+                .text("Add to Circle")
+                .appendTo($item);
+
+            $results.append($item);
+        });
     }
 
     async function performSearch(query, requestId) {
@@ -168,6 +272,15 @@ let searchTimer;
         }, 300);
     });
 
+    // Delegated click handling for "Add to Circle" buttons
+    $(document).on("click", ".add-to-circle-btn", function () {
+        const selectedUserId = $(this).data("userid");
+        console.log("Add to circle clicked for user:", selectedUserId);
+
+        $(this).text("Selected").prop("disabled", true).addClass("selected-user");
+    });
+
     // Start loading config early (dashboard.html may not include it)
+    injectSearchStyles();
     loadSupabaseConfigIfMissing();
 })();
